@@ -12,8 +12,8 @@ namespace RatScanner.ViewModel
 {
 	internal class MainWindowVM : INotifyPropertyChanged
 	{
-		private const string UpSymbol = "▲";
-		private const string DownSymbol = "▼";
+		public const string UpSymbol = "▲";
+		public const string DownSymbol = "▼";
 
 		private RatScannerMain _dataSource;
 
@@ -27,49 +27,61 @@ namespace RatScanner.ViewModel
 			}
 		}
 
+		private bool wishlistChanged;
+
 		private ItemScan CurrentItemScan => DataSource?.CurrentItemScan;
 
 		private Item[] MatchedItems => CurrentItemScan?.MatchedItems;
 
-		public string IconPath => IconManager.GetIconPath(MatchedItems[0]);
+		private Item currentItem;
+		private Item CurrentItem
+		{
+			get
+			{
+				if (currentItem != MatchedItems[0])
+				{
+					if (wishlistChanged)
+					{
+						RatScannerMain.Instance.SaveWishlist();
+					}
 
-		public string Name => MatchedItems[0].Name;
+					currentItem = MatchedItems[0];
+					wishlistChanged = false;
+				}
 
-		public bool HasMods => MatchedItems[0] is CompoundItem itemC && itemC.Slots.Count > 0;
+				return currentItem;
+			}
+		}
+
+		public string IconPath => IconManager.GetIconPath(CurrentItem);
+
+		public string Name => CurrentItem.Name;
+
+		public bool HasMods => CurrentItem is CompoundItem itemC && itemC.Slots.Count > 0;
 
 		// https://youtrack.jetbrains.com/issue/RSRP-468572
 		// ReSharper disable InconsistentNaming
 		public string Avg24hPrice => PriceToString(GetAvg24hPrice());
 
-		private int GetAvg24hPrice()
-		{
-			return MatchedItems[0].GetAvg24hMarketPrice();
-		}
+		private int GetAvg24hPrice() => CurrentItem.GetAvg24hMarketPrice();
 		// ReSharper restore InconsistentNaming
 
-		public string PricePerSlot => PriceToString(GetAvg24hPrice() / (MatchedItems[0].Width * MatchedItems[0].Height));
+		public string PricePerSlot => PriceToString(GetAvg24hPrice() / (CurrentItem.Width * CurrentItem.Height));
 
 		public string TraderName => TraderPrice.GetTraderName(GetBestTrader().traderId);
 
 		public string BestTraderPrice => IntToGroupedString(GetBestTrader().price) + " ₽";
 
-		private (string traderId, int price) GetBestTrader()
-		{
-			return MatchedItems[0].GetBestTrader();
-		}
+		private (string traderId, int price) GetBestTrader() => CurrentItem.GetBestTrader();
 
 		public string MaxTraderPrice => IntToGroupedString(GetMaxTraderPrice()) + " ₽";
 
-		private int GetMaxTraderPrice()
-		{
-			return MatchedItems[0].GetMaxTraderPrice();
-		}
+		public NeededItem TrackingNeeds => CurrentItem.GetTrackingNeeds();
 
-		public NeededItem TrackingNeeds => MatchedItems[0].GetTrackingNeeds();
+		public NeededItem TrackingTeamNeedsSummed => CurrentItem.GetSummedTrackingTeamNeeds();
+		private int GetMaxTraderPrice() => CurrentItem.GetMaxTraderPrice();
 
-		public NeededItem TrackingTeamNeedsSummed => MatchedItems[0].GetSummedTrackingTeamNeeds();
-
-		public List<KeyValuePair<string, NeededItem>> TrackingTeamNeeds => MatchedItems[0].GetTrackingTeamNeeds();
+		public List<KeyValuePair<string, NeededItem>> TrackingTeamNeeds => CurrentItem.GetTrackingTeamNeeds();
 
 		public List<KeyValuePair<string, NeededItem>> TrackingTeamNeedsFiltered => TrackingTeamNeeds.Where(x => x.Value.Remaining > 0).ToList();
 
@@ -84,16 +96,18 @@ namespace RatScanner.ViewModel
 			get
 			{
 				var dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-				var min = MatchedItems[0].GetMarketItem().Timestamp;
+				var min = CurrentItem.GetMarketItem().Timestamp;
 				return dt.AddSeconds(min).ToLocalTime().ToString(CultureInfo.CurrentCulture);
 			}
 		}
+
+		public int WishlistAmount => CurrentItem.GetWishlistAmount();
 
 		public string WikiLink
 		{
 			get
 			{
-				var link = MatchedItems[0].GetMarketItem().WikiLink;
+				var link = CurrentItem.GetMarketItem().WikiLink;
 				if (link.Length > 3) return link;
 				return $"https://escapefromtarkov.gamepedia.com/{HttpUtility.UrlEncode(Name.Replace(" ", "_"))}";
 			}
@@ -116,6 +130,32 @@ namespace RatScanner.ViewModel
 		{
 			OnPropertyChanged();
 		}
+
+		#region Commands
+		private RelayCommand increaseAmountCommand;
+		public RelayCommand IncreaseAmountCommand => increaseAmountCommand ??= new RelayCommand(() => IncreaseAmount());
+
+		private RelayCommand decreaseAmountCommand;
+		public RelayCommand DecreaseAmountCommand => decreaseAmountCommand ??= new RelayCommand(() => DecreaseAmount(), (wa) => WishlistAmount != 0);
+		#endregion
+
+		#region Methods
+		private void IncreaseAmount()
+		{
+			CurrentItem.SetWishlistAmount(WishlistAmount + 1);
+			wishlistChanged = true;
+
+			OnPropertyChanged("WishlistAmount");
+			DecreaseAmountCommand.RaiseCanExecuteChanged();
+		}
+
+		private void DecreaseAmount()
+		{
+			CurrentItem.SetWishlistAmount(WishlistAmount - 1);
+			wishlistChanged = true;
+			OnPropertyChanged("WishlistAmount");
+		}
+		#endregion
 
 		private string PriceToString(int price)
 		{

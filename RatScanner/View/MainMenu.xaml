@@ -8,12 +8,22 @@
 						 d:DesignHeight="370"
 						 d:DesignWidth="280"
 						 x:ClassModifier="internal"
-						 Background="#444444"
 						 mc:Ignorable="d">
+
+	<UserControl.Style>
+		<Style TargetType="{x:Type UserControl}">
+			<Setter Property="Background" Value="#445626"/>
+			<Style.Triggers>
+				<DataTrigger Binding="{Binding WishlistAmount, UpdateSourceTrigger=PropertyChanged}" Value="0">
+					<Setter Property="Background" Value="#444444"/>
+				</DataTrigger>
+			</Style.Triggers>
+		</Style>
+	</UserControl.Style>
 
 	<Grid Margin="10,0">
 		<StackPanel Grid.Row="0">
-			<Grid Margin="0,10,0,5">
+			<Grid Margin="0,5,0,5">
 				<StackPanel Grid.Column="0"
 										VerticalAlignment="Center"
 										Orientation="Horizontal">
@@ -80,7 +90,7 @@
 			</Grid>
 
 			<StackPanel>
-				<Separator />
+				<Separator Margin="0,0,0,0" />
 				<Grid>
 					<Label Grid.Column="0"
 								 Content="Average Day Price" />
@@ -176,8 +186,7 @@
 
 			<StackPanel>
 				<Separator />
-
-				<Grid>
+				<Grid Margin="0,5">
 					<Label Grid.Column="0"
 								 Content="Links" />
 					<TextBlock Grid.Column="1"
@@ -195,7 +204,31 @@
 					</Grid.ColumnDefinitions>
 				</Grid>
 			</StackPanel>
-			<Separator />
+
+			<StackPanel>
+				<Separator Margin="0,0,0,0"/>
+				<Grid Margin="0,5,0,0">
+					<Label Grid.Column="0"
+								 Content="Wishlist" />
+
+					<DockPanel Grid.Column="1">
+						<Button Content="▼"
+										Command="{Binding DecreaseAmountCommand}"
+										Height="20"
+										Width="20" />
+						<Label Content="{Binding WishlistAmount, UpdateSourceTrigger=PropertyChanged}" />
+						<Button Content="▲"
+										Command="{Binding IncreaseAmountCommand}"
+										Height="20"
+										Width="20" />
+					</DockPanel>
+
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
+				</Grid>
+			</StackPanel>
 
 			<Grid>
 				<Label Grid.Column="0"

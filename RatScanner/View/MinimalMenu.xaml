@@ -66,10 +66,10 @@
 							 Content="{Binding Name}"
 							 d:Content="AKMN 7.62x39 assault rifle" />
 			</StackPanel>
-			<Separator />
 		</StackPanel>
-
+			
 		<StackPanel>
+			<Separator />
 			<Grid x:Name="AvgDayPriceDisplay"
 						Margin="0,5,0,0">
 				<Label Grid.Column="0"
@@ -159,6 +159,33 @@
 			</StackPanel.Style>
 		</StackPanel>
 
+		<StackPanel>
+			<StackPanel.Style>
+				<Style TargetType="{x:Type StackPanel}">
+					<Setter Property="Visibility" Value="Visible"/>
+					<Style.Triggers>
+						<DataTrigger Binding="{Binding WishlistAmount}" Value="0">
+							<Setter Property="Visibility" Value="Collapsed"/>
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</StackPanel.Style>
+			<Separator />
+
+			<Grid Margin="0,0,0,0">
+				<Label Grid.Column="0"
+							 Content="On wishlist" />
+				<Label Grid.Column="1"
+							 Margin="0,0,0,0"
+							 Content="{Binding WishlistAmount, FallbackValue=0}" />
+
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+			</Grid>
+		</StackPanel>
+			
 		<StackPanel x:Name="TrackingDisplay">
 			<StackPanel>
 				<Separator />

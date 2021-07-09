@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using Newtonsoft.Json;
+using RatScanner.Models;
 using RatScanner.Scan;
 using RatScanner.View;
 using RatStash;
@@ -50,6 +54,7 @@ namespace RatScanner
 		internal ProgressDB ProgressDB;
 		internal TarkovTrackerDB TarkovTrackerDB;
 		internal Database ItemDB;
+		internal List<WishlistModel> WishlistDB;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -100,6 +105,9 @@ namespace RatScanner
 			Logger.LogInfo("Loading price data...");
 			MarketDB = new MarketDB();
 			MarketDB.Init();
+
+			Logger.LogInfo("Loading wishlist data...");
+			LoadWishlist();
 
 			Logger.LogInfo("Setting default item...");
 			CurrentItemScan = new ItemNameScan();
@@ -155,6 +163,21 @@ namespace RatScanner
 			startInfo.ArgumentList.Add("--update");
 			Process.Start(startInfo);
 			Environment.Exit(0);
+		}
+
+		internal async Task SaveWishlist()
+		{
+			await File.WriteAllTextAsync(RatConfig.Paths.Wishlist, JsonConvert.SerializeObject(WishlistDB));
+		}
+
+		private void LoadWishlist()
+		{
+			WishlistDB = new List<WishlistModel>();
+
+			if (File.Exists(RatConfig.Paths.Wishlist))
+			{
+				WishlistDB = JsonConvert.DeserializeObject<List<WishlistModel>>(File.ReadAllText(RatConfig.Paths.Wishlist));
+			}
 		}
 
 		private void LoadItemDatabase()

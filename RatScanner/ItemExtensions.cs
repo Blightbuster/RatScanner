@@ -2,6 +2,7 @@
 using System.Linq;
 using RatScanner.FetchModels;
 using System.Collections.Generic;
+using RatScanner.Models;
 using RatStash;
 using RatScanner.FetchModels.TarkovTracker;
 
@@ -223,6 +224,36 @@ namespace RatScanner
 			}
 
 			return result;
+		}
+
+		public static void SetWishlistAmount(this Item item, int value)
+		{
+			var wishlistItem = RatScannerMain.Instance.WishlistDB.FirstOrDefault(x => x.ItemID == item.Id);
+
+			if (wishlistItem != null)
+			{
+				if (value > 0)
+				{
+					wishlistItem.Amount = value;
+				}
+				else
+				{
+					RatScannerMain.Instance.WishlistDB.Remove(wishlistItem);
+				}
+			}
+			else
+			{
+				RatScannerMain.Instance.WishlistDB.Add(new WishlistModel
+				{
+					ItemID = item.Id,
+					Amount = value
+				});
+			}
+		}
+
+		public static int GetWishlistAmount(this Item item)
+		{
+			return RatScannerMain.Instance.WishlistDB?.FirstOrDefault(x => x.ItemID == item.Id)?.Amount ?? 0;
 		}
 	}
 }
